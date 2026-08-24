@@ -68,16 +68,37 @@ A porta `5433` do computador é direcionada para a porta padrão
 
 ```text
 Banco_dados_EmporioBebidas/
-│
-├── sql/
-│   ├── 01_ddl.sql
-│   └── 02_dml.sql
-│
-├── docker-compose.yml
+├── LICENSE
 ├── README.md
-└── docs/
-    ├── Diagrama_lógico.png
-    └── Dicionário de Dados.pdf
+├── Sistema
+│   ├── Dockerfile
+│   ├── jsconfig.json
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   └── src
+│       ├── app
+│       │   ├── api
+│       │   │   ├── produtos
+│       │   │   │   └── route.js
+│       │   │   └── views
+│       │   │       └── route.js
+│       │   ├── layout.js
+│       │   ├── produtos
+│       │   │   └── page.js
+│       │   └── relatorios
+│       │       └── page.js
+│       └── lib
+│           └── db.js
+├── docker-compose.yml
+├── docs
+│   ├── Diagrama_lógico.png
+│   ├── Dicionário de Dados.pdf
+│   └── Dicionário de Dados.pdfZone.Identifier
+└── sql
+    ├── 01_ddl.sql
+    ├── 02_dml.sql
+    └── 03_views.sql
 ```
 
 ### `01_ddl.sql`
