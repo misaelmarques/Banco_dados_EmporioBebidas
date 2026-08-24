@@ -109,6 +109,10 @@ Responsável pela criação das tabelas, chaves primárias, chaves estrangeiras,
 
 Responsável pelo povoamento do banco de dados com os dados utilizados nos testes e consultas.
 
+### `03_views.sql`
+
+Responsável por gerar as views do banco de dados.
+
 ## Execução com Docker
 
 Para executar o projeto, é necessário possuir o Docker e o Docker Compose instalados.
