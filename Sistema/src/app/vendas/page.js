@@ -19,6 +19,7 @@ export default function TelaVendas() {
 
   const [produtoSelecionado, setProdutoSelecionado] = useState('');
   const [quantidade, setQuantidade] = useState(1);
+  const [editandoId, setEditandoId] = useState(null);
 
   useEffect(() => {
     carregarVendas();
@@ -78,6 +79,11 @@ export default function TelaVendas() {
     return form.itens.reduce((total, item) => total + (item.quantidade * item.preco_unitario), 0);
   };
 
+  const limparFormulario = () => {
+    setForm({ id_cliente: '', tipo: 'Retirada', id_endereco: '', valor_frete: '', numero_retirada: '', itens: [] });
+    setEditandoId(null);
+  };
+
   const salvarVenda = async (e) => {
     e.preventDefault();
     if (form.itens.length === 0) return alert("Adicione ao menos um produto!");
@@ -87,24 +93,66 @@ export default function TelaVendas() {
       valor_total: calcularTotalItens()
     };
 
+    const metodo = editandoId ? 'PUT' : 'POST';
+    if (editandoId) payload.id_venda = editandoId;
+
     const res = await fetch('/api/vendas', {
-      method: 'POST',
+      method: metodo,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     if (res.ok) {
-      setForm({ id_cliente: '', tipo: 'Retirada', id_endereco: '', valor_frete: '', numero_retirada: '', itens: [] });
+      limparFormulario();
       carregarVendas();
-      alert("Venda registrada!");
+      alert(editandoId ? "Venda atualizada!" : "Venda registrada!");
     } else {
-      alert("Erro ao registrar venda.");
+      alert(editandoId ? "Erro ao atualizar venda." : "Erro ao registrar venda.");
+    }
+  };
+
+  const prepararEdicao = async (id_venda) => {
+    const res = await fetch(`/api/vendas?id=${id_venda}`);
+    if (!res.ok) return alert("Erro ao carregar a venda para edição.");
+    const venda = await res.json();
+
+    if (venda.tipo === 'Entrega') {
+      await carregarEnderecos(venda.id_cliente);
+    }
+
+    setForm({
+      id_cliente: String(venda.id_cliente),
+      tipo: venda.tipo,
+      id_endereco: venda.id_endereco ? String(venda.id_endereco) : '',
+      valor_frete: venda.valor_frete ?? '',
+      numero_retirada: venda.numero_retirada ?? '',
+      itens: venda.itens.map(it => ({
+        id_produto: it.id_produto,
+        nome: it.nome,
+        quantidade: it.quantidade,
+        preco_unitario: parseFloat(it.preco_unitario)
+      }))
+    });
+    setEditandoId(id_venda);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const deletarVenda = async (id_venda) => {
+    if (!confirm(`Tem certeza que deseja deletar a venda #${id_venda}?`)) return;
+    const res = await fetch(`/api/vendas?id=${id_venda}`, { method: 'DELETE' });
+    if (res.ok) {
+      if (editandoId === id_venda) limparFormulario();
+      carregarVendas();
+    } else {
+      alert("Erro ao deletar a venda.");
     }
   };
 
   return (
     <div>
-      <h1 style={{ color: '#0f172a', marginBottom: '20px' }}>🛒 PDV / Nova Venda</h1>
+      <h1 style={{ color: '#0f172a', marginBottom: '20px' }}>
+        🛒 {editandoId ? `Editando Venda #${editandoId}` : 'PDV / Nova Venda'}
+      </h1>
 
       <form onSubmit={salvarVenda} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '30px' }}>
         <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -196,9 +244,16 @@ export default function TelaVendas() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ color: '#16a34a', margin: 0 }}>Total Itens: R$ {calcularTotalItens().toFixed(2)}</h2>
-          <button type="submit" style={{ padding: '12px 25px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
-            Finalizar Venda
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {editandoId && (
+              <button type="button" onClick={limparFormulario} style={{ padding: '12px 20px', backgroundColor: '#94a3b8', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+            )}
+            <button type="submit" style={{ padding: '12px 25px', backgroundColor: editandoId ? '#eab308' : '#22c55e', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
+              {editandoId ? 'Salvar Alterações' : 'Finalizar Venda'}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -211,6 +266,7 @@ export default function TelaVendas() {
             <th style={{ padding: '12px' }}>Data</th>
             <th style={{ padding: '12px' }}>Tipo</th>
             <th style={{ padding: '12px' }}>Total</th>
+            <th style={{ padding: '12px' }}>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -221,6 +277,14 @@ export default function TelaVendas() {
               <td style={{ padding: '12px' }}>{new Date(v.data_venda).toLocaleDateString('pt-BR')}</td>
               <td style={{ padding: '12px' }}>{v.tipo}</td>
               <td style={{ padding: '12px', fontWeight: 'bold', color: '#16a34a' }}>R$ {v.valor_total}</td>
+              <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
+                <button onClick={() => prepararEdicao(v.id_venda)} style={{ padding: '5px 10px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                  Editar
+                </button>
+                <button onClick={() => deletarVenda(v.id_venda)} style={{ padding: '5px 10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                  Deletar
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

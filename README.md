@@ -62,6 +62,17 @@ O banco é executado em um container Docker.
 A porta `5433` do computador é direcionada para a porta padrão
 `5432` do PostgreSQL dentro do container.
 
+### Portas da Aplicação
+
+A aplicação web (backend + frontend) é construída em **Next.js**, onde o backend (rotas de API em `src/app/api`) e o frontend rodam no mesmo processo.
+
+| Serviço | Porta (host) | Porta (container) |
+|---|---|---|
+| Banco de dados (PostgreSQL) | `5433` | `5432` |
+| Backend + Frontend (Next.js) | `3000` | `3000` |
+
+Após executar `docker compose up`, a aplicação fica acessível em **http://localhost:3000** e o banco em **localhost:5433**.
+
 ---
 
 ## Estrutura do Projeto
