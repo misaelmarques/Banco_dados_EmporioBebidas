@@ -54,6 +54,7 @@ CREATE TABLE endereco (
 CREATE TABLE venda (
     id_venda SERIAL PRIMARY KEY,
     id_cliente INT NOT NULL,
+    id_endereco INT,
     data_venda DATE NOT NULL,
     horario_venda TIME NOT NULL,
     valor_total DECIMAL(10, 2) NOT NULL CHECK (valor_total >= 0),
@@ -61,18 +62,14 @@ CREATE TABLE venda (
     valor_frete DECIMAL(10, 2), 
     numero_retirada INT,  
 
-    CHECK (
-        (tipo = 'Entrega'
-            AND valor_frete IS NOT NULL
-            AND valor_frete >= 0
-            AND numero_retirada IS NULL)
-        OR
-        (tipo = 'Retirada'
-            AND valor_frete IS NULL
-            AND numero_retirada IS NOT NULL)
-    ),    
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_endereco) REFERENCES endereco(id_endereco),
 
-    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+    CHECK (
+        (tipo = 'Entrega' AND valor_frete IS NOT NULL AND valor_frete >= 0 AND id_endereco IS NOT NULL AND numero_retirada IS NULL)
+        OR
+        (tipo = 'Retirada' AND valor_frete IS NULL AND id_endereco IS NULL AND numero_retirada IS NOT NULL)
+    )
 );
 
 -- Item_Pedido (Entidade Fraca de Venda)
