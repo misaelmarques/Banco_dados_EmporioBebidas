@@ -15,3 +15,31 @@ services:
       - ./sql/01_ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql
       - ./sql/02_dml.sql:/docker-entrypoint-initdb.d/02_dml.sql
       - ./sql/03_views.sql:/docker-entrypoint-initdb.d/03_views.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_adega -d emporio_bebidas"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+  
+  web:
+    build:
+      context: ./Sistema
+      dockerfile: Dockerfile
+    container_name: emporio_web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=admin_adega
+      - DB_PASSWORD=admin_senha_123
+      - DB_HOST=postgres_adega
+      - DB_PORT=5432
+      - DB_DATABASE=emporio_bebidas
+    depends_on:
+      postgres_adega:
+        condition: service_healthy
+    volumes:
+      - ./Sistema:/app
+      - /app/node_modules
+      - /app/.next
